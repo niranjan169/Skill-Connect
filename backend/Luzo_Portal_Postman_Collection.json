@@ -1,0 +1,574 @@
+{
+	"info": {
+		"_postman_id": "luzo-portal-api-tests",
+		"name": "Luzo Portal API Tests",
+		"description": "Complete API testing collection for Luzo Portal",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"location\": \"New York\",\n  \"yearsOfExperience\": 3,\n  \"education\": \"Bachelor's in Computer Science\",\n  \"skills\": [\"Java\", \"Spring Boot\", \"PostgreSQL\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register/user",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "register", "user"]
+						}
+					}
+				},
+				{
+					"name": "Register Recruiter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Mike Johnson\",\n  \"email\": \"mike.johnson@techcorp.com\",\n  \"password\": \"password123\",\n  \"companyName\": \"Tech Corp\",\n  \"companyWebsite\": \"https://techcorp.com\",\n  \"companyLocation\": \"New York\",\n  \"aboutCompany\": \"Leading technology company\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register/recruiter",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "register", "recruiter"]
+						}
+					}
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"userToken\", jsonData.token);",
+									"    pm.environment.set(\"userId\", jsonData.userId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login Recruiter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"recruiterToken\", jsonData.token);",
+									"    pm.environment.set(\"recruiterId\", jsonData.userId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"mike.johnson@techcorp.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User Flow",
+			"item": [
+				{
+					"name": "View All Jobs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/jobs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "jobs"]
+						}
+					}
+				},
+				{
+					"name": "Search Jobs",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"location\": \"New York\",\n  \"jobType\": \"FULL_TIME\",\n  \"minExperience\": 2,\n  \"maxExperience\": 5,\n  \"minSalary\": 70000,\n  \"maxSalary\": 100000,\n  \"skills\": [\"Java\", \"Spring Boot\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/user/jobs/search",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "jobs", "search"]
+						}
+					}
+				},
+				{
+					"name": "View Job Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/jobs/{{jobId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "jobs", "{{jobId}}"]
+						}
+					}
+				},
+				{
+					"name": "Save Job",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/jobs/{{jobId}}/save",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "jobs", "{{jobId}}", "save"]
+						}
+					}
+				},
+				{
+					"name": "Get Saved Jobs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/saved-jobs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "saved-jobs"]
+						}
+					}
+				},
+				{
+					"name": "Apply for Job",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"applicationId\", jsonData.applicationId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jobId\": {{jobId}},\n  \"education\": \"Bachelor's in Computer Science\",\n  \"yearsOfExperience\": 3,\n  \"skills\": [\"Java\", \"Spring Boot\", \"PostgreSQL\", \"REST API\"],\n  \"resumeUrl\": \"https://storage.example.com/resumes/john_doe.pdf\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/user/applications",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "applications"]
+						}
+					}
+				},
+				{
+					"name": "Track Applications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/applications",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "applications"]
+						}
+					}
+				},
+				{
+					"name": "Get Recommendations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/recommendations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "recommendations"]
+						}
+					}
+				},
+				{
+					"name": "User Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "dashboard"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Recruiter Flow",
+			"item": [
+				{
+					"name": "Create Job",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"jobId\", jsonData.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Senior Java Developer\",\n  \"description\": \"We are looking for an experienced Java developer with Spring Boot expertise.\",\n  \"location\": \"New York\",\n  \"jobType\": \"FULL_TIME\",\n  \"minExperience\": 3,\n  \"maxExperience\": 5,\n  \"minSalary\": 80000,\n  \"maxSalary\": 120000,\n  \"requiredSkills\": [\"Java\", \"Spring Boot\", \"PostgreSQL\", \"Kubernetes\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/recruiter/jobs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "recruiter", "jobs"]
+						}
+					}
+				},
+				{
+					"name": "Get My Jobs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/recruiter/jobs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "recruiter", "jobs"]
+						}
+					}
+				},
+				{
+					"name": "View Applicants",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/recruiter/jobs/{{jobId}}/applicants",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "recruiter", "jobs", "{{jobId}}", "applicants"]
+						}
+					}
+				},
+				{
+					"name": "Filter Candidates",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"location\": \"New York\",\n  \"minExperience\": 2,\n  \"maxExperience\": 5,\n  \"education\": \"Bachelor\",\n  \"skills\": [\"Java\", \"Spring Boot\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/recruiter/jobs/{{jobId}}/applicants/filter",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "recruiter", "jobs", "{{jobId}}", "applicants", "filter"]
+						}
+					}
+				},
+				{
+					"name": "Update Status - Shortlist",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/recruiter/applications/{{applicationId}}?status=SHORTLISTED&notes=Great candidate!",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "recruiter", "applications", "{{applicationId}}"],
+							"query": [
+								{
+									"key": "status",
+									"value": "SHORTLISTED"
+								},
+								{
+									"key": "notes",
+									"value": "Great candidate!"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Recruiter Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{recruiterToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/recruiter/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "recruiter", "dashboard"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin Flow",
+			"item": [
+				{
+					"name": "Admin Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "dashboard"]
+						}
+					}
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "users"]
+						}
+					}
+				},
+				{
+					"name": "Get All Recruiters",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/recruiters",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "recruiters"]
+						}
+					}
+				},
+				{
+					"name": "Get Pending Jobs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/jobs/pending",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "jobs", "pending"]
+						}
+					}
+				},
+				{
+					"name": "Approve Job",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/jobs/{{jobId}}/approve",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "jobs", "{{jobId}}", "approve"]
+						}
+					}
+				},
+				{
+					"name": "Approve Recruiter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/recruiters/{{recruiterProfileId}}/approve",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "recruiters", "{{recruiterProfileId}}", "approve"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
