@@ -1,0 +1,95 @@
+/* ===================================================
+   SOLARIS AUTH - Flagship Styles
+   =================================================== */
+
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    background: var(--color-bg);
+    position: relative; overflow: hidden;
+}
+
+.auth-wrapper::before {
+    content: ''; position: absolute; inset: 0;
+    background: var(--grad-aurora); z-index: 0;
+}
+
+.solaris-card {
+    width: 100%; max-width: 480px;
+    padding: 48px;
+    border-radius: var(--radius-xl);
+    position: relative; z-index: 10;
+    transition: var(--trans-smooth);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-luxe);
+}
+
+.solaris-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6), 0 0 30px rgba(99, 102, 241, 0.1);
+}
+
+.auth-header { text-align: center; margin-bottom: 40px; }
+.auth-logo {
+    width: 64px; height: 64px; margin: 0 auto 24px;
+    background: var(--grad-solaris);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 900; font-size: 32px;
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+}
+
+.auth-title { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.auth-subtitle { color: var(--text-secondary); font-size: 16px; }
+
+/* Solaris Form Elements */
+.solaris-group { margin-bottom: 24px; position: relative; }
+.solaris-label {
+    display: block; font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); margin-bottom: 10px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+}
+
+.solaris-input {
+    width: 100%; padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: #fff; font-family: var(--font-body);
+    font-size: 16px; transition: var(--trans-fast);
+}
+
+.solaris-input:focus {
+    outline: none; border-color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.solaris-btn {
+    width: 100%; padding: 18px;
+    background: var(--grad-solaris);
+    border: none; border-radius: var(--radius-md);
+    color: #fff; font-weight: 700; font-size: 16px;
+    cursor: pointer; transition: var(--trans-smooth);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+
+.solaris-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+}
+
+.solaris-btn:active { transform: scale(0.98); }
+
+.auth-footer { margin-top: 32px; text-align: center; font-size: 15px; color: var(--text-secondary); }
+.auth-link { color: var(--color-primary); font-weight: 600; text-decoration: none; transition: var(--trans-fast); }
+.auth-link:hover { color: var(--color-secondary); text-decoration: underline; }
+
+.error-msg {
+    color: #ff4d4d; font-size: 13px; margin-top: 6px; font-weight: 500;
+}

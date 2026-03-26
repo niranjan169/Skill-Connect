@@ -1,188 +1,144 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { recruiterService } from '../../services/recruiterService';
+import SolarisLayout from '../../components/layout/SolarisLayout';
 import { useToast } from '../../hooks/useToast';
-
-const JOB_TYPES = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP'];
+import api from '../../services/api';
+import '../../styles/solaris-layout.css';
+import '../../styles/solar-auth.css';
 
 export default function CreateJobPage() {
-    const { register, handleSubmit, formState: { errors }, reset } = useForm();
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        location: '',
+        jobType: 'FULL_TIME',
+        companyName: '',
+        minExperience: '',
+        maxExperience: '',
+        minSalary: '',
+        maxSalary: '',
+    });
+    const [skillsString, setSkillsString] = useState('');
     const [loading, setLoading] = useState(false);
-    const [skills, setSkills] = useState([]);
-    const [skillInput, setSkillInput] = useState('');
-    const navigate = useNavigate();
+    
     const toast = useToast();
+    const navigate = useNavigate();
 
-    const addSkill = (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            const v = skillInput.trim();
-            if (v && !skills.includes(v)) setSkills([...skills, v]);
-            setSkillInput('');
-        }
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const onSubmit = async (data) => {
-        if (skills.length === 0) { toast.warning('Please add at least one required skill.'); return; }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setLoading(true);
         try {
-            await recruiterService.createJob({
-                ...data,
-                requiredSkills: skills,
-                minSalary: Number(data.minSalary),
-                maxSalary: Number(data.maxSalary),
-                minExperience: Number(data.minExperience),
-                maxExperience: Number(data.maxExperience),
-            });
-            toast.success('Job posted! Awaiting admin approval.');
-            reset();
-            setSkills([]);
+            const requiredSkills = skillsString.split(',').map(s => s.trim()).filter(s => s);
+            const payload = {
+                title: formData.title,
+                description: formData.description,
+                location: formData.location,
+                jobType: formData.jobType,
+                companyName: formData.companyName || undefined,
+                minExperience: formData.minExperience ? parseInt(formData.minExperience) : undefined,
+                maxExperience: formData.maxExperience ? parseInt(formData.maxExperience) : undefined,
+                minSalary: formData.minSalary ? parseFloat(formData.minSalary) : undefined,
+                maxSalary: formData.maxSalary ? parseFloat(formData.maxSalary) : undefined,
+                requiredSkills,
+            };
+            await api.post('/recruiter/jobs', payload);
+            toast.success('Opportunity Broadcast Successful!');
             navigate('/recruiter/jobs');
         } catch (err) {
-            toast.error(err.message || 'Failed to post job.');
+            toast.error(err);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="page-enter">
-            <div className="page-header">
-                <h1 className="page-header__title">Post a New Job</h1>
-                <p className="page-header__subtitle">Fill in the details below to attract the best candidates</p>
-            </div>
+        <SolarisLayout>
+            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+                <div style={{ marginBottom: '40px' }}>
+                    <h1 style={{ fontSize: '32px', marginBottom: '8px' }}>Broadcast Opportunity</h1>
+                    <p style={{ color: 'var(--text-secondary)' }}>Define requirements for your next Solaris acquisition.</p>
+                </div>
 
-            <div style={{ maxWidth: '760px' }}>
-                <div className="card">
-                    <form className="form" onSubmit={handleSubmit(onSubmit)}>
-                        {/* Basic Info */}
-                        <div style={{ paddingBottom: '20px', borderBottom: '1px solid var(--color-border)', marginBottom: '8px' }}>
-                            <div style={{ fontSize: 'var(--text-sm)', fontWeight: '700', color: 'var(--color-primary-light)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
-                                📋 Basic Information
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Job Title *</label>
-                                <input
-                                    className={`form-input ${errors.title ? 'error' : ''}`}
-                                    placeholder="e.g. Senior React Developer"
-                                    {...register('title', { required: 'Job title is required' })}
-                                />
-                                {errors.title && <span className="form-error">⚠ {errors.title.message}</span>}
-                            </div>
-
-                            <div className="form-group" style={{ marginTop: '16px' }}>
-                                <label className="form-label">Company Name (Optional)</label>
-                                <input
-                                    className="form-input"
-                                    placeholder="e.g. Luzo Corp (Leave blank to use profile name)"
-                                    {...register('companyName')}
-                                />
-                            </div>
-
-                            <div className="form-group" style={{ marginTop: '16px' }}>
-                                <label className="form-label">Job Description *</label>
-                                <textarea
-                                    className={`form-textarea ${errors.description ? 'error' : ''}`}
-                                    rows={5}
-                                    placeholder="Describe the role, responsibilities, and requirements…"
-                                    {...register('description', { required: 'Description is required', minLength: { value: 50, message: 'At least 50 characters' } })}
-                                />
-                                {errors.description && <span className="form-error">⚠ {errors.description.message}</span>}
+                <div className="bento-item" style={{ padding: '48px' }}>
+                    <form onSubmit={handleSubmit}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px', marginBottom: '32px' }}>
+                            <div className="solaris-group" style={{ marginBottom: 0 }}>
+                                <label className="solaris-label">POSITION TITLE *</label>
+                                <input name="title" className="solaris-input" required placeholder="e.g. Senior Full Stack Engineer" onChange={handleChange} />
                             </div>
                         </div>
 
-                        {/* Location & Type */}
-                        <div style={{ paddingBottom: '20px', borderBottom: '1px solid var(--color-border)' }}>
-                            <div style={{ fontSize: 'var(--text-sm)', fontWeight: '700', color: 'var(--color-primary-light)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
-                                📍 Location & Type
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+                            <div className="solaris-group" style={{ marginBottom: 0 }}>
+                                <label className="solaris-label">ENGAGEMENT TYPE *</label>
+                                <select name="jobType" className="solaris-input" onChange={handleChange}>
+                                    <option value="FULL_TIME">Full-time</option>
+                                    <option value="PART_TIME">Part-time</option>
+                                    <option value="CONTRACT">Contract</option>
+                                    <option value="INTERNSHIP">Internship</option>
+                                    <option value="REMOTE">Remote</option>
+                                </select>
                             </div>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Location *</label>
-                                    <input
-                                        className={`form-input ${errors.location ? 'error' : ''}`}
-                                        placeholder="City, State or Remote"
-                                        {...register('location', { required: 'Location is required' })}
-                                    />
-                                    {errors.location && <span className="form-error">⚠ {errors.location.message}</span>}
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Job Type *</label>
-                                    <select className={`form-select ${errors.jobType ? 'error' : ''}`} {...register('jobType', { required: 'Select a job type' })}>
-                                        <option value="">Select type…</option>
-                                        {JOB_TYPES.map((t) => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
-                                    </select>
-                                    {errors.jobType && <span className="form-error">⚠ {errors.jobType.message}</span>}
-                                </div>
+                            <div className="solaris-group" style={{ marginBottom: 0 }}>
+                                <label className="solaris-label">LOCATION *</label>
+                                <input name="location" className="solaris-input" required placeholder="Remote / City, Country" onChange={handleChange} />
                             </div>
                         </div>
 
-                        {/* Salary & Experience */}
-                        <div style={{ paddingBottom: '20px', borderBottom: '1px solid var(--color-border)' }}>
-                            <div style={{ fontSize: 'var(--text-sm)', fontWeight: '700', color: 'var(--color-primary-light)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
-                                💰 Compensation & Experience
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px', marginBottom: '32px' }}>
+                            <div className="solaris-group" style={{ marginBottom: 0 }}>
+                                <label className="solaris-label">MIN EXP (YRS)</label>
+                                <input name="minExperience" type="number" min="0" className="solaris-input" placeholder="e.g. 2" onChange={handleChange} />
                             </div>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Min Salary (USD) *</label>
-                                    <input type="number" className={`form-input ${errors.minSalary ? 'error' : ''}`} placeholder="50000" {...register('minSalary', { required: 'Required' })} />
-                                    {errors.minSalary && <span className="form-error">⚠ {errors.minSalary.message}</span>}
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Max Salary (USD) *</label>
-                                    <input type="number" className={`form-input ${errors.maxSalary ? 'error' : ''}`} placeholder="100000" {...register('maxSalary', { required: 'Required' })} />
-                                    {errors.maxSalary && <span className="form-error">⚠ {errors.maxSalary.message}</span>}
-                                </div>
+                            <div className="solaris-group" style={{ marginBottom: 0 }}>
+                                <label className="solaris-label">MAX EXP (YRS)</label>
+                                <input name="maxExperience" type="number" min="0" className="solaris-input" placeholder="e.g. 5" onChange={handleChange} />
                             </div>
-                            <div className="form-row" style={{ marginTop: '16px' }}>
-                                <div className="form-group">
-                                    <label className="form-label">Min Experience (years)</label>
-                                    <input type="number" className="form-input" placeholder="0" {...register('minExperience')} />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Max Experience (years)</label>
-                                    <input type="number" className="form-input" placeholder="10" {...register('maxExperience')} />
-                                </div>
+                            <div className="solaris-group" style={{ marginBottom: 0 }}>
+                                <label className="solaris-label">MIN SALARY ($)</label>
+                                <input name="minSalary" type="number" min="0" className="solaris-input" placeholder="e.g. 80000" onChange={handleChange} />
+                            </div>
+                            <div className="solaris-group" style={{ marginBottom: 0 }}>
+                                <label className="solaris-label">MAX SALARY ($)</label>
+                                <input name="maxSalary" type="number" min="0" className="solaris-input" placeholder="e.g. 120000" onChange={handleChange} />
                             </div>
                         </div>
 
-                        {/* Skills */}
-                        <div>
-                            <div style={{ fontSize: 'var(--text-sm)', fontWeight: '700', color: 'var(--color-primary-light)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
-                                🛠️ Required Skills
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Add skills (press Enter)</label>
-                                <div className="skills-tags">
-                                    {skills.map((s) => (
-                                        <span key={s} className="skill-tag">
-                                            {s}
-                                            <button type="button" className="skill-tag__remove" onClick={() => setSkills(skills.filter((x) => x !== s))}>✕</button>
-                                        </span>
-                                    ))}
-                                    <input
-                                        style={{ border: 'none', background: 'transparent', flex: 1, minWidth: '140px', padding: '4px 0', color: 'var(--color-text-primary)', outline: 'none', fontSize: 'var(--text-base)' }}
-                                        placeholder="e.g. React, Java, Docker…"
-                                        value={skillInput}
-                                        onChange={(e) => setSkillInput(e.target.value)}
-                                        onKeyDown={addSkill}
-                                    />
-                                </div>
-                                {skills.length === 0 && <span className="form-hint">Add at least one required skill</span>}
-                            </div>
+                        <div className="solaris-group">
+                            <label className="solaris-label">POSITION DESCRIPTION *</label>
+                            <textarea 
+                                name="description" 
+                                className="solaris-input" 
+                                style={{ minHeight: '180px', resize: 'vertical' }}
+                                required 
+                                placeholder="Outline the mission, key responsibilities, and growth opportunities..."
+                                onChange={handleChange} 
+                            />
                         </div>
 
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: '12px', paddingTop: '8px' }}>
-                            <button type="button" className="btn btn--secondary" onClick={() => navigate(-1)}>Cancel</button>
-                            <button type="submit" className="btn btn--primary btn--lg" disabled={loading} style={{ flex: 1 }}>
-                                {loading ? <><span className="spinner" /> Posting…</> : '🚀 Post Job'}
+                        <div className="solaris-group">
+                            <label className="solaris-label">REQUIRED CAPABILITIES (COMMA SEPARATED)</label>
+                            <input 
+                                className="solaris-input" 
+                                placeholder="React, Node.js, PostgreSQL, Docker..."
+                                value={skillsString}
+                                onChange={(e) => setSkillsString(e.target.value)}
+                            />
+                        </div>
+
+                        <div style={{ marginTop: '48px', display: 'flex', gap: '20px', justifyContent: 'flex-end' }}>
+                            <button type="button" onClick={() => navigate(-1)} className="solaris-btn" style={{ background: 'transparent', border: '1px solid var(--glass-border)', width: 'auto', padding: '14px 40px' }}>Cancel</button>
+                            <button type="submit" className="solaris-btn" style={{ width: 'auto', padding: '14px 60px' }} disabled={loading}>
+                                {loading ? 'Broadcasting...' : '🚀 Initialize Broadcast'}
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
+        </SolarisLayout>
     );
 }

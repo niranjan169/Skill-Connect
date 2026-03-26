@@ -1,164 +1,67 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { recruiterService } from '../../services/recruiterService';
+import { Link } from 'react-router-dom';
+import SolarisLayout from '../../components/layout/SolarisLayout';
+import api from '../../services/api';
 import { useToast } from '../../hooks/useToast';
-import Modal from '../../components/common/Modal';
-import { useForm } from 'react-hook-form';
-
-
-
-const JOB_TYPES = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP'];
+import '../../styles/solaris-layout.css';
 
 export default function ManageJobsPage() {
-    const navigate = useNavigate();
-    const toast = useToast();
     const [jobs, setJobs] = useState([]);
-    const [editJob, setEditJob] = useState(null);
-    const [delJob, setDelJob] = useState(null);
-    const { register, handleSubmit, reset, formState: { errors } } = useForm();
+    const toast = useToast();
 
     useEffect(() => {
-        (async () => {
-            try {
-                const res = await recruiterService.getMyJobs();
-                if (res?.data?.length) setJobs(res.data);
-            } catch { }
-        })();
+        fetchJobs();
     }, []);
 
-    const openEdit = (job) => {
-        setEditJob(job);
-        reset({ title: job.title, location: job.location, jobType: job.jobType, minSalary: job.minSalary, maxSalary: job.maxSalary });
+    const fetchJobs = () => {
+        api.get('/recruiter/jobs').then(res => setJobs(res.data)).catch(() => {});
     };
-
-    const onEdit = async (data) => {
-        try {
-            await recruiterService.updateJob(editJob.id, data);
-            setJobs((prev) => prev.map((j) => j.id === editJob.id ? { ...j, ...data } : j));
-            toast.success('Job updated!');
-            setEditJob(null);
-        } catch (err) { toast.error(err.message); }
-    };
-
-    const onDelete = async () => {
-        try {
-            await recruiterService.deleteJob(delJob.id);
-            setJobs((prev) => prev.filter((j) => j.id !== delJob.id));
-            toast.success('Job deleted.');
-            setDelJob(null);
-        } catch (err) { toast.error(err.message); }
-    };
-
-    const statusBadge = (s) => s === 'APPROVED'
-        ? <span className="badge badge--success">✓ Approved</span>
-        : <span className="badge badge--warning">⏳ Pending</span>;
 
     return (
-        <div className="page-enter">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <SolarisLayout>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <div>
-                    <h1 className="page-header__title">Manage Jobs</h1>
-                    <p className="page-header__subtitle">{jobs.length} jobs posted by you</p>
+                    <h1 style={{ fontSize: '32px', marginBottom: '8px' }}>Asset Management</h1>
+                    <p style={{ color: 'var(--text-secondary)' }}>Oversee your broadcasted opportunities and acquisition metrics.</p>
                 </div>
-                <button className="btn btn--primary" onClick={() => navigate('/recruiter/jobs/create')}>➕ Post New Job</button>
+                <Link to="/recruiter/jobs/create" className="solaris-btn" style={{ width: 'auto', padding: '14px 32px' }}>+ New Position</Link>
             </div>
 
-            <div className="table-container">
-                {jobs.length === 0 ? (
-                    <div className="empty-state">
-                        <div className="empty-state__icon">💼</div>
-                        <div className="empty-state__title">No jobs posted yet</div>
-                        <div className="empty-state__desc">Create your first job posting to start receiving applications.</div>
-                        <button className="btn btn--primary" onClick={() => navigate('/recruiter/jobs/create')}>Post a Job</button>
+            <div className="bento-grid">
+                {jobs.length > 0 ? jobs.map(job => (
+                    <div key={job.id} className="bento-item" style={{ gridColumn: 'span 6', padding: '32px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                            <div>
+                                <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '4px' }}>{job.title}</h3>
+                                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Posted {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Active Matrix'}</p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-primary)' }}>{job.applicationCount || 0}</div>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>APPLICANTS</div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '24px', marginBottom: '32px' }}>
+                             <div style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--glass-border)', textAlign: 'center' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>TYPE</div>
+                                <div style={{ fontSize: '13px', fontWeight: 600 }}>{job.jobType?.replace('_', ' ') || 'FULL TIME'}</div>
+                             </div>
+                             <div style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--glass-border)', textAlign: 'center' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>LOCATION</div>
+                                <div style={{ fontSize: '13px', fontWeight: 600 }}>{job.location}</div>
+                             </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px', paddingTop: '24px', borderTop: '1px solid var(--glass-border)' }}>
+                            <Link to={`/recruiter/applications?jobId=${job.id}`} className="solaris-btn" style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--color-secondary)', border: '1px solid rgba(16,185,129,0.2)', padding: '10px 0', flex: 1 }}>View Applicants</Link>
+                        </div>
                     </div>
-                ) : (
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Location</th>
-                                <th>Type</th>
-                                <th>Salary</th>
-                                <th>Applicants</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {jobs.map((job) => (
-                                <tr key={job.id}>
-                                    <td style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{job.title}</td>
-                                    <td>{job.location}</td>
-                                    <td><span className="badge badge--gray">{job.jobType.replace('_', ' ')}</span></td>
-                                    <td>${(job.minSalary / 1000).toFixed(0)}k–${(job.maxSalary / 1000).toFixed(0)}k</td>
-                                    <td>
-                                        <button
-                                            className="btn btn--ghost btn--sm"
-                                            onClick={() => navigate(`/recruiter/applications?jobId=${job.id}`)}
-                                        >
-                                            👥 {job.applicantCount}
-                                        </button>
-                                    </td>
-                                    <td>{statusBadge(job.status)}</td>
-                                    <td>
-                                        <div className="table__actions">
-                                            <button className="btn btn--secondary btn--sm" onClick={() => openEdit(job)} title="Edit">✏️</button>
-                                            <button className="btn btn--danger btn--sm" onClick={() => setDelJob(job)} title="Delete">🗑️</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                )) : (
+                    <div className="bento-item" style={{ gridColumn: 'span 12', textAlign: 'center', padding: '100px', color: 'var(--text-muted)' }}>
+                        Primary broadcast array is empty. <Link to="/recruiter/jobs/create" className="auth-link">Create your first job</Link> to begin.
+                    </div>
                 )}
             </div>
-
-            {/* Edit Modal */}
-            <Modal isOpen={!!editJob} onClose={() => setEditJob(null)} title="Edit Job Posting" size="md">
-                <form className="form" onSubmit={handleSubmit(onEdit)}>
-                    <div className="form-group">
-                        <label className="form-label">Job Title</label>
-                        <input className={`form-input ${errors.title ? 'error' : ''}`} {...register('title', { required: true })} />
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label className="form-label">Location</label>
-                            <input className="form-input" {...register('location')} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Job Type</label>
-                            <select className="form-select" {...register('jobType')}>
-                                {JOB_TYPES.map((t) => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
-                            </select>
-                        </div>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label className="form-label">Min Salary</label>
-                            <input type="number" className="form-input" {...register('minSalary')} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Max Salary</label>
-                            <input type="number" className="form-input" {...register('maxSalary')} />
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button type="button" className="btn btn--secondary btn--full" onClick={() => setEditJob(null)}>Cancel</button>
-                        <button type="submit" className="btn btn--primary btn--full">Save Changes</button>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Delete Confirm Modal */}
-            <Modal isOpen={!!delJob} onClose={() => setDelJob(null)} title="Delete Job" size="sm">
-                <p style={{ color: 'var(--color-text-secondary)', marginBottom: '24px' }}>
-                    Are you sure you want to delete <strong style={{ color: 'var(--color-text-primary)' }}>{delJob?.title}</strong>? This action cannot be undone.
-                </p>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn btn--secondary btn--full" onClick={() => setDelJob(null)}>Cancel</button>
-                    <button className="btn btn--danger btn--full" onClick={onDelete}>🗑️ Delete Job</button>
-                </div>
-            </Modal>
-        </div>
+        </SolarisLayout>
     );
 }

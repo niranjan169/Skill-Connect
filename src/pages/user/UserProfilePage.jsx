@@ -1,179 +1,131 @@
 import { useState, useEffect } from 'react';
-import { userService } from '../../services/userService';
+import SolarisLayout from '../../components/layout/SolarisLayout';
+import api from '../../services/api';
 import { useToast } from '../../hooks/useToast';
+import '../../styles/solaris-layout.css';
 
 export default function UserProfilePage() {
-    const { toast } = useToast();
-    const [loading, setLoading] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [profile, setProfile] = useState({
-        fullName: '',
+    const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
         email: '',
-        location: '',
-        yearsOfExperience: 0,
+        phone: '',
+        skills: '',
         education: '',
-        skills: []
+        experience: 0,
+        resumeUrl: ''
     });
-    const [newSkill, setNewSkill] = useState('');
+    
+    const toast = useToast();
 
     useEffect(() => {
-        fetchProfile();
+        api.get('/user/profile').then(res => {
+            setProfile(res.data);
+            setFormData({
+                name: res.data.name || '',
+                email: res.data.email || '',
+                phone: res.data.phone || '',
+                skills: res.data.skills ? res.data.skills.join(', ') : '',
+                education: res.data.education || '',
+                experience: res.data.experience || 0,
+                resumeUrl: res.data.resumeUrl || ''
+            });
+            setLoading(false);
+        }).catch(err => {
+            toast.error('Failed to load identity profile');
+            setLoading(false);
+        });
     }, []);
 
-    const fetchProfile = async () => {
-        setLoading(true);
-        try {
-            const res = await userService.getProfile();
-            if (res?.data) {
-                setProfile({
-                    ...res.data,
-                    skills: res.data.skills || []
-                });
-            }
-        } catch (err) {
-            toast.error('Failed to load profile');
-        } finally {
-            setLoading(false);
-        }
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSave = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setSaving(true);
+        setUpdating(true);
         try {
-            const res = await userService.updateProfile(profile);
-            if (res?.data) {
-                toast.success('Profile updated successfully');
-                setProfile(res.data);
-            }
+            const payload = {
+                ...formData,
+                skills: formData.skills.split(',').map(s => s.trim()).filter(s => s),
+                experience: parseInt(formData.experience)
+            };
+            const res = await api.put('/user/profile', payload);
+            setProfile(res.data);
+            toast.success('Identity Resynchronized Successfully');
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to update profile');
+            toast.error(err);
         } finally {
-            setSaving(false);
+            setUpdating(false);
         }
     };
 
-    const addSkill = () => {
-        if (!newSkill.trim()) return;
-        if (profile.skills.some(s => s.toLowerCase() === newSkill.trim().toLowerCase())) {
-            toast.warning('Skill already added');
-            return;
-        }
-        setProfile({ ...profile, skills: [...profile.skills, newSkill.trim()] });
-        setNewSkill('');
-    };
-
-    const removeSkill = (skill) => {
-        setProfile({ ...profile, skills: profile.skills.filter(s => s !== skill) });
-    };
-
-    if (loading) {
-        return (
-            <div className="page-enter" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div className="skeleton" style={{ height: '40px', width: '200px' }} />
-                <div className="skeleton" style={{ height: '300px' }} />
-            </div>
-        );
-    }
+    if (loading) return <SolarisLayout><div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '100px' }}>Accessing Identity Matrix...</div></SolarisLayout>;
 
     return (
-        <div className="page-enter">
-            <div className="page-header">
-                <h1 className="page-header__title">My Profile</h1>
-                <p className="page-header__subtitle">Manage your personal details and professional skills</p>
+        <SolarisLayout>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <div style={{ marginBottom: '40px' }}>
+                    <h1 style={{ fontSize: '32px', marginBottom: '8px' }}>User Identity Profile</h1>
+                    <p style={{ color: 'var(--text-secondary)' }}>Modify your core parameters within the Solaris ecosystem.</p>
+                </div>
+
+                <div className="bento-item" style={{ padding: '48px' }}>
+                    <form onSubmit={handleSubmit}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
+                            <div className="solaris-group">
+                                <label className="solaris-label">FULL LEGAL NAME</label>
+                                <input name="name" className="solaris-input" value={formData.name} onChange={handleChange} />
+                            </div>
+                            <div className="solaris-group">
+                                <label className="solaris-label">SYSTEM EMAIL (READ-ONLY)</label>
+                                <input className="solaris-input" value={formData.email} disabled style={{ opacity: 0.6 }} />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
+                            <div className="solaris-group">
+                                <label className="solaris-label">COMMUNICATION LINK (PHONE)</label>
+                                <input name="phone" className="solaris-input" value={formData.phone} onChange={handleChange} />
+                            </div>
+                            <div className="solaris-group">
+                                <label className="solaris-label">EXPERIENCE THRESHOLD (YEARS)</label>
+                                <input name="experience" type="number" className="solaris-input" value={formData.experience} onChange={handleChange} />
+                            </div>
+                        </div>
+
+                        <div className="solaris-group" style={{ marginBottom: '32px' }}>
+                            <label className="solaris-label">ACADEMIC BACKGROUND</label>
+                            <input name="education" className="solaris-input" value={formData.education} onChange={handleChange} placeholder="e.g. B.Tech in Computer Science" />
+                        </div>
+
+                        <div className="solaris-group" style={{ marginBottom: '32px' }}>
+                            <label className="solaris-label">CAPABILITY MATRIX (SKILLS, COMMA SEPARATED)</label>
+                            <textarea 
+                                name="skills" 
+                                className="solaris-input" 
+                                style={{ minHeight: '120px' }}
+                                value={formData.skills} 
+                                onChange={handleChange} 
+                                placeholder="React, Java, Spring Boot, AWS..."
+                            />
+                        </div>
+
+                        <div className="solaris-group" style={{ marginBottom: '32px' }}>
+                            <label className="solaris-label">RESUME REPOSITORY LINK (HTTPS)</label>
+                            <input name="resumeUrl" className="solaris-input" value={formData.resumeUrl} onChange={handleChange} placeholder="https://drive.google.com/..." />
+                        </div>
+
+                        <div style={{ marginTop: '48px', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button type="submit" className="solaris-btn" style={{ width: 'auto', padding: '14px 60px' }} disabled={updating}>
+                                {updating ? 'Resynchronizing...' : '💾 Update Identity'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            <div className="card anim-fade-in" style={{ maxWidth: '800px' }}>
-                <form onSubmit={handleSave}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                        <div className="form-group">
-                            <label className="form-label">Email Address</label>
-                            <input
-                                className="form-input"
-                                value={profile.email}
-                                disabled
-                                style={{ background: 'var(--color-bg-body)', cursor: 'not-allowed' }}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Full Name</label>
-                            <input
-                                className="form-input"
-                                value={profile.fullName}
-                                onChange={e => setProfile({ ...profile, fullName: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Location</label>
-                            <input
-                                className="form-input"
-                                placeholder="e.g. New York, NY"
-                                value={profile.location || ''}
-                                onChange={e => setProfile({ ...profile, location: e.target.value })}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Years of Experience</label>
-                            <input
-                                type="number"
-                                className="form-input"
-                                min="0"
-                                value={profile.yearsOfExperience || 0}
-                                onChange={e => setProfile({ ...profile, yearsOfExperience: parseInt(e.target.value) || 0 })}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Education</label>
-                            <input
-                                className="form-input"
-                                placeholder="e.g. Bachelor in CS"
-                                value={profile.education || ''}
-                                onChange={e => setProfile({ ...profile, education: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-group" style={{ marginTop: '24px' }}>
-                        <label className="form-label">Skills & Expertise</label>
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-                            <input
-                                className="form-input"
-                                style={{ flex: 1 }}
-                                placeholder="e.g. Java, React, SQL"
-                                value={newSkill}
-                                onChange={e => setNewSkill(e.target.value)}
-                                onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                            />
-                            <button type="button" className="btn btn--secondary" onClick={addSkill}>Add Skill</button>
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {profile.skills.length === 0 ? (
-                                <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>No skills added yet.</span>
-                            ) : (
-                                profile.skills.map(skill => (
-                                    <div key={skill} className="badge badge--primary" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px' }}>
-                                        {skill}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeSkill(skill)}
-                                            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, fontSize: '14px' }}
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-
-                    <div style={{ marginTop: '32px', borderTop: '1px solid var(--color-border)', paddingTop: '24px' }}>
-                        <button type="submit" className="btn btn--primary" disabled={saving}>
-                            {saving ? 'Saving...' : 'Save Profile Changes'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        </SolarisLayout>
     );
 }

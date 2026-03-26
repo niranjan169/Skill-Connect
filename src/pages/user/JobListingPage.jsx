@@ -1,244 +1,218 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { userService } from '../../services/userService';
+import { Link } from 'react-router-dom';
+import SolarisLayout from '../../components/layout/SolarisLayout';
 import { useToast } from '../../hooks/useToast';
-
-const JOB_TYPES = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP'];
-const SKILLS_LIST = ['React', 'Node.js', 'Java', 'Python', 'Spring Boot', 'MongoDB', 'SQL', 'TypeScript', 'AWS', 'Docker'];
-
-
-const ITEMS_PER_PAGE = 6;
+import api from '../../services/api';
+import '../../styles/solaris-layout.css';
 
 export default function JobListingPage() {
-    const navigate = useNavigate();
-    const toast = useToast();
     const [jobs, setJobs] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState('');
-    const [saved, setSaved] = useState(new Set());
-    const [page, setPage] = useState(1);
-    const [filters, setFilters] = useState({ jobTypes: [], skills: [], location: '' });
+    const [loading, setLoading] = useState(true);
+    
+    // Filter State
+    const [title, setTitle] = useState('');
+    const [location, setLocation] = useState('');
+    const [jobType, setJobType] = useState('');
+    const [minExperience, setMinExperience] = useState('');
+    const [skillsString, setSkillsString] = useState('');
+
+    const toast = useToast();
+
+    const fetchJobs = async () => {
+        setLoading(true);
+        try {
+            const filterRequest = {};
+            if (title) filterRequest.title = title;
+            if (location) filterRequest.location = location;
+            if (jobType) filterRequest.jobType = jobType;
+            if (minExperience) filterRequest.minExperience = parseInt(minExperience, 10);
+            if (skillsString) {
+                filterRequest.skills = skillsString.split(',').map(s => s.trim()).filter(Boolean);
+            }
+
+            const res = await api.post('/user/jobs/search', filterRequest);
+            setJobs(res.data);
+        } catch (err) {
+            toast.error('Failed to load opportunities');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        (async () => {
-            setLoading(true);
-            try {
-                const res = await userService.getAllJobs();
-                if (res?.data) {
-                    setJobs(res.data);
-                    // Sync initial saved state from backend flags
-                    const initialSaved = new Set(
-                        res.data.filter(j => j.saved).map(j => j.id)
-                    );
-                    setSaved(initialSaved);
-                }
-            } catch {
-                toast.error("Failed to load jobs. Please try again later.");
-            } finally { setLoading(false); }
-        })();
+        fetchJobs();
     }, []);
 
-    const toggleFilter = (key, val) => {
-        setFilters((f) => {
-            const arr = f[key];
-            return { ...f, [key]: arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val] };
-        });
-        setPage(1);
-    };
-
-    const clearFilters = () => { setFilters({ jobTypes: [], skills: [], location: '' }); setSearch(''); setPage(1); };
-
-    const filtered = jobs.filter((j) => {
-        const q = search.toLowerCase();
-        const matchQ = !q || j.title.toLowerCase().includes(q) || j.companyName.toLowerCase().includes(q) || j.location.toLowerCase().includes(q);
-        const matchType = !filters.jobTypes.length || filters.jobTypes.includes(j.jobType);
-        const matchSkills = !filters.skills.length || filters.skills.some((s) => j.skills.includes(s));
-        const matchLoc = !filters.location || j.location.toLowerCase().includes(filters.location.toLowerCase());
-        return matchQ && matchType && matchSkills && matchLoc;
-    });
-
-    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-    const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-
-    const handleSave = async (jobId, e) => {
-        e.stopPropagation();
-        const isSaved = saved.has(jobId);
-        setSaved((s) => { const ns = new Set(s); isSaved ? ns.delete(jobId) : ns.add(jobId); return ns; });
+    const toggleSaveJob = async (jobId, isCurrentlySaved) => {
         try {
-            isSaved ? await userService.unsaveJob(jobId) : await userService.saveJob(jobId);
-            toast.success(isSaved ? 'Job removed from saved.' : 'Job saved!');
-        } catch (err) { toast.error(err.message); }
+            if (isCurrentlySaved) {
+                await api.delete(`/user/jobs/${jobId}/save`);
+                toast.success('Removed from saved jobs');
+            } else {
+                await api.post(`/user/jobs/${jobId}/save`);
+                toast.success('Job saved successfully');
+            }
+            setJobs(jobs.map(j => j.id === jobId ? { ...j, saved: !isCurrentlySaved } : j));
+        } catch (err) {
+            toast.error('Failed to toggle save state');
+        }
     };
 
-    const fmtSalary = (min, max) =>
-        `$${(min / 1000).toFixed(0)}k – $${(max / 1000).toFixed(0)}k`;
+    const getMatchColor = (percent) => {
+        if (!percent || percent < 40) return '#ef4444'; // Red
+        if (percent < 75) return '#f59e0b'; // Orange
+        return '#10b981'; // Green
+    };
 
     return (
-        <div className="page-enter">
-            <div className="page-header">
-                <h1 className="page-header__title">Browse Jobs</h1>
-                <p className="page-header__subtitle">
-                    {filtered.length} opportunities found matching your criteria
-                </p>
+        <SolarisLayout>
+            <div style={{ marginBottom: '40px' }}>
+                <h1 style={{ fontSize: '32px', marginBottom: '8px' }}>Solaris Browse</h1>
+                <p style={{ color: 'var(--text-secondary)' }}>Explore elite opportunities curated for your trajectory.</p>
             </div>
 
-            <div className="filter-layout">
-                {/* Filter Sidebar */}
-                <aside className="filter-sidebar">
-                    <div className="filter-sidebar__title">
-                        Filters
-                        <button className="btn btn--ghost btn--sm" onClick={clearFilters}>Clear</button>
+            <div style={{ 
+                marginBottom: '32px', padding: '24px', 
+                background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)',
+                borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '20px'
+            }}>
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 300px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Title or Company</label>
+                        <input className="solaris-input" placeholder="e.g. Frontend Engineer" value={title} onChange={e => setTitle(e.target.value)} />
                     </div>
-
-                    {/* Location */}
-                    <div className="filter-section">
-                        <div className="filter-section__label">Location</div>
-                        <input
-                            className="form-input"
-                            placeholder="City or Remote…"
-                            value={filters.location}
-                            onChange={(e) => { setFilters((f) => ({ ...f, location: e.target.value })); setPage(1); }}
-                        />
+                    <div style={{ flex: '1 1 200px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Location</label>
+                        <input className="solaris-input" placeholder="e.g. Remote, NY" value={location} onChange={e => setLocation(e.target.value)} />
                     </div>
-
-                    {/* Job Type */}
-                    <div className="filter-section">
-                        <div className="filter-section__label">Job Type</div>
-                        {JOB_TYPES.map((t) => (
-                            <label key={t} className="filter-checkbox">
-                                <input type="checkbox" checked={filters.jobTypes.includes(t)} onChange={() => toggleFilter('jobTypes', t)} />
-                                {t.replace('_', ' ')}
-                            </label>
-                        ))}
+                    <div style={{ flex: '1 1 200px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Required Skills (comma separated)</label>
+                        <input className="solaris-input" placeholder="e.g. React, Java" value={skillsString} onChange={e => setSkillsString(e.target.value)} />
                     </div>
-
-                    {/* Skills */}
-                    <div className="filter-section">
-                        <div className="filter-section__label">Skills</div>
-                        {SKILLS_LIST.map((s) => (
-                            <label key={s} className="filter-checkbox">
-                                <input type="checkbox" checked={filters.skills.includes(s)} onChange={() => toggleFilter('skills', s)} />
-                                {s}
-                            </label>
-                        ))}
+                </div>
+                
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 150px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Job Type</label>
+                        <select className="solaris-input" style={{ width: '100%', minHeight: '50px' }} value={jobType} onChange={e => setJobType(e.target.value)}>
+                            <option value="">All Types</option>
+                            <option value="FULL_TIME">Full Time</option>
+                            <option value="PART_TIME">Part Time</option>
+                            <option value="CONTRACT">Contract</option>
+                            <option value="FREELANCE">Freelance</option>
+                            <option value="INTERNSHIP">Internship</option>
+                        </select>
                     </div>
-                </aside>
-
-                {/* Jobs Grid */}
-                <div>
-                    {/* Search Bar */}
-                    <div className="search-input-wrapper" style={{ marginBottom: '24px' }}>
-                        <span className="search-icon">🔍</span>
-                        <input
-                            className="form-input"
-                            placeholder="Search by title, company, or location…"
-                            value={search}
-                            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                        />
+                    <div style={{ flex: '1 1 150px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Min Experience (Yrs)</label>
+                        <input type="number" className="solaris-input" placeholder="0" value={minExperience} onChange={e => setMinExperience(e.target.value)} min="0" />
                     </div>
-
-                    {loading ? (
-                        <div className="grid grid-auto">
-                            {[...Array(6)].map((_, i) => (
-                                <div key={i} className="skeleton skeleton-card" style={{ height: '220px' }} />
-                            ))}
-                        </div>
-                    ) : paginated.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state__icon">🔍</div>
-                            <div className="empty-state__title">No jobs found</div>
-                            <div className="empty-state__desc">Try adjusting your filters or search term.</div>
-                            <button className="btn btn--primary" onClick={clearFilters}>Clear All Filters</button>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="grid grid-auto">
-                                {paginated.map((job, i) => (
-                                    <div
-                                        key={job.id}
-                                        className={`job-card anim-fade-in delay-${Math.min(i + 1, 6)}`}
-                                        onClick={() => navigate(`/user/jobs/${job.id}`)}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-
-                                        <div className="job-card__top">
-                                            <div>
-                                                <div className={`job-card__company-logo`} style={{
-                                                    background: `hsl(${job.id * 47 % 360}, 60%, 40%)`,
-                                                }}>
-                                                    {job.companyName.charAt(0)}
-                                                </div>
-                                            </div>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div className="job-card__title">{job.title}</div>
-                                                <div className="job-card__company">{job.companyName}</div>
-                                            </div>
-                                            <button
-                                                className={`job-card__save-btn ${saved.has(job.id) ? 'saved' : ''}`}
-                                                onClick={(e) => handleSave(job.id, e)}
-                                                title="Save job"
-                                            >
-                                                {saved.has(job.id) ? '❤️' : '🤍'}
-                                            </button>
-                                        </div>
-
-                                        <div className="job-card__meta">
-                                            <span className="job-card__meta-item">📍 {job.location}</span>
-                                            <span className="job-card__meta-item">💼 {job.jobType.replace('_', ' ')}</span>
-                                            <span className="job-card__meta-item">💰 {fmtSalary(job.minSalary, job.maxSalary)}</span>
-                                        </div>
-
-                                        <div className="job-card__skills">
-                                            {job.skills.slice(0, 3).map((s) => (
-                                                <span key={s} className="badge badge--primary">{s}</span>
-                                            ))}
-                                            {job.skills.length > 3 && (
-                                                <span className="badge badge--gray">+{job.skills.length - 3}</span>
-                                            )}
-                                        </div>
-
-                                        <div className="job-card__actions">
-                                            <button
-                                                className={`btn ${job.applied ? 'btn--secondary' : 'btn--primary'} btn--sm`}
-                                                onClick={(e) => { e.stopPropagation(); navigate(`/user/jobs/${job.id}`); }}
-                                                style={{ flex: 1 }}
-                                                disabled={job.applied}
-                                            >
-                                                {job.applied ? 'Applied' : 'Apply Now'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Pagination */}
-                            {totalPages > 1 && (
-                                <div className="pagination">
-                                    <button
-                                        className="pagination__btn"
-                                        disabled={page === 1}
-                                        onClick={() => setPage((p) => p - 1)}
-                                    >←</button>
-                                    {[...Array(totalPages)].map((_, i) => (
-                                        <button
-                                            key={i}
-                                            className={`pagination__btn ${page === i + 1 ? 'active' : ''}`}
-                                            onClick={() => setPage(i + 1)}
-                                        >
-                                            {i + 1}
-                                        </button>
-                                    ))}
-                                    <button
-                                        className="pagination__btn"
-                                        disabled={page === totalPages}
-                                        onClick={() => setPage((p) => p + 1)}
-                                    >→</button>
-                                </div>
-                            )}
-                        </>
-                    )}
+                    <button className="solaris-btn" style={{ width: 'auto', padding: '0 40px', height: '50px' }} onClick={fetchJobs}>
+                        {loading ? 'Searching...' : '🔍 Apply Filters'}
+                    </button>
+                    <button className="solaris-btn" style={{ width: 'auto', padding: '0 20px', height: '50px', background: 'transparent', border: '1px solid var(--glass-border)' }} onClick={() => {
+                        setTitle(''); setLocation(''); setJobType(''); setMinExperience(''); setSkillsString(''); fetchJobs();
+                    }}>
+                        Clear
+                    </button>
                 </div>
             </div>
-        </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                {jobs.length > 0 ? jobs.map(job => {
+                    const matchScore = job.matchPercentage || 0;
+                    const strokeColor = getMatchColor(matchScore);
+                    
+                    return (
+                    <div key={job.id} className="bento-item" style={{ padding: '32px', position: 'relative' }}>
+                        <button 
+                            onClick={() => toggleSaveJob(job.id, job.saved)}
+                            style={{ 
+                                position: 'absolute', top: '24px', right: '24px', 
+                                background: 'transparent', border: 'none', cursor: 'pointer',
+                                fontSize: '24px', color: job.saved ? '#ef4444' : 'var(--text-muted)',
+                                transition: 'all 0.2s ease'
+                            }}
+                            title={job.saved ? "Unsave Job" : "Save Job"}
+                        >
+                            {job.saved ? '❤️' : '🤍'}
+                        </button>
+
+                        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', paddingRight: '40px' }}>
+                            {/* Match Radial Dial */}
+                            <div style={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
+                                <svg width="60" height="60" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke={strokeColor} strokeWidth="8"
+                                        strokeDasharray={`${matchScore * 2.51} 251`}
+                                        strokeDashoffset="0" transform="rotate(-90 50 50)" strokeLinecap="round" 
+                                        style={{ transition: 'stroke-dasharray 1s ease-out' }} />
+                                </svg>
+                                <div style={{ 
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                    fontSize: '14px', fontWeight: 800, color: strokeColor 
+                                }}>
+                                    {matchScore}%
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '6px' }}>{job.title}</h3>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{job.companyName} • {job.location}</p>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                            <div style={{ 
+                                background: 'rgba(16,185,129,0.1)', color: 'var(--color-secondary)',
+                                padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 800
+                            }}>
+                                {job.jobType || 'FULL_TIME'}
+                            </div>
+                            {job.minExperience > 0 && (
+                                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                                    {job.minExperience} - {job.maxExperience || '*'} Yrs Exp
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                            {job.skills?.slice(0, 4).map(s => (
+                                <span key={s} style={{ 
+                                    padding: '4px 10px', background: 'rgba(255,255,255,0.03)', 
+                                    border: '1px solid var(--glass-border)', borderRadius: '6px', 
+                                    fontSize: '11px', color: 'var(--text-secondary)'
+                                }}>
+                                    {s}
+                                </span>
+                            ))}
+                            {job.skills?.length > 4 && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>+{job.skills.length - 4} more</span>}
+                        </div>
+
+                        {job.missingSkills && job.missingSkills.length > 0 && (
+                            <div style={{ marginBottom: '24px', fontSize: '12px', color: '#f59e0b', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <span>⚠️ Missing Vital Skills:</span>
+                                {job.missingSkills.slice(0, 2).map(ms => <strong key={ms}>{ms}</strong>)}
+                                {job.missingSkills.length > 2 && <span>+{job.missingSkills.length - 2} more</span>}
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
+                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>
+                                ${job.minSalary?.toLocaleString() || 0} - ${job.maxSalary?.toLocaleString() || '∞'}
+                            </div>
+                            <Link to={`/user/jobs/${job.id}`} className="solaris-btn" style={{ width: 'auto', padding: '10px 24px', fontSize: '14px' }}>
+                                Detailed Intel →
+                            </Link>
+                        </div>
+                    </div>
+                )}) : (
+                    <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>
+                        {loading ? 'Commencing scan...' : 'No opportunities matching your criteria were found.'}
+                    </div>
+                )}
+            </div>
+        </SolarisLayout>
     );
 }

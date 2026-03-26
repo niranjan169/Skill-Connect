@@ -1,96 +1,123 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { userService } from '../../services/userService';
+import { Link } from 'react-router-dom';
+import SolarisLayout from '../../components/layout/SolarisLayout';
 import { useToast } from '../../hooks/useToast';
-
-
+import api from '../../services/api';
 
 export default function SavedJobsPage() {
-    const navigate = useNavigate();
+    const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
     const toast = useToast();
-    const [saved, setSaved] = useState([]);
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        (async () => {
-            setLoading(true);
-            try {
-                const res = await userService.getSavedJobs();
-                if (res?.data?.length) setSaved(res.data);
-            } catch { } finally { setLoading(false); }
-        })();
-    }, []);
+        api.get('/user/saved-jobs')
+            .then(res => setJobs(res.data))
+            .catch(() => toast.error('Failed to load saved jobs'))
+            .finally(() => setLoading(false));
+    }, [toast]);
 
-    const handleUnsave = async (jobId) => {
-        setSaved((s) => s.filter((j) => j.id !== jobId));
+    const toggleSaveJob = async (jobId) => {
         try {
-            await userService.unsaveJob(jobId);
-            toast.success('Job removed from saved list.');
-        } catch (err) { toast.error(err.message); }
+            await api.delete(`/user/jobs/${jobId}/save`);
+            toast.success('Removed from saved jobs');
+            setJobs(jobs.filter(j => j.id !== jobId));
+        } catch (err) {
+            toast.error('Failed to unsave job');
+        }
+    };
+
+    const getMatchColor = (percent) => {
+        if (!percent || percent < 40) return '#ef4444'; 
+        if (percent < 75) return '#f59e0b'; 
+        return '#10b981'; 
     };
 
     return (
-        <div className="page-enter">
-            <div className="page-header">
-                <h1 className="page-header__title">Saved Jobs ❤️</h1>
-                <p className="page-header__subtitle">{saved.length} jobs bookmarked for later</p>
+        <SolarisLayout>
+            <div style={{ marginBottom: '40px' }}>
+                <h1 style={{ fontSize: '32px', marginBottom: '8px' }}>Watchlist Matrix</h1>
+                <p style={{ color: 'var(--text-secondary)' }}>Positions you have highlighted for future engagement.</p>
             </div>
 
-            {loading ? (
-                <div className="grid grid-auto">
-                    {[...Array(3)].map((_, i) => <div key={i} className="skeleton skeleton-card" style={{ height: '200px' }} />)}
-                </div>
-            ) : saved.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-state__icon">🤍</div>
-                    <div className="empty-state__title">No saved jobs yet</div>
-                    <div className="empty-state__desc">Browse jobs and click the heart icon to save them here.</div>
-                    <button className="btn btn--primary" onClick={() => navigate('/user/jobs')}>Browse Jobs</button>
-                </div>
-            ) : (
-                <div className="grid grid-auto">
-                    {saved.map((job, i) => (
-                        <div key={job.id} className={`job-card anim-fade-in delay-${Math.min(i + 1, 6)}`}>
-                            <div className="job-card__top">
-                                <div style={{
-                                    width: '44px', height: '44px', borderRadius: 'var(--radius-md)',
-                                    background: `hsl(${job.id * 47 % 360}, 60%, 40%)`,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontWeight: 800, color: 'white', fontSize: '18px', flexShrink: 0,
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                {jobs.length > 0 ? jobs.map(job => {
+                    const matchScore = job.matchPercentage || 0;
+                    const strokeColor = getMatchColor(matchScore);
+                    
+                    return (
+                    <div key={job.id} className="bento-item" style={{ padding: '32px', position: 'relative' }}>
+                        <button 
+                            onClick={() => toggleSaveJob(job.id)}
+                            style={{ 
+                                position: 'absolute', top: '24px', right: '24px', 
+                                background: 'transparent', border: 'none', cursor: 'pointer',
+                                fontSize: '24px', color: '#ef4444', transition: 'all 0.2s ease'
+                            }}
+                            title="Remove from Watchlist"
+                        >
+                            ❤️
+                        </button>
+
+                        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', paddingRight: '40px' }}>
+                            {/* Match Radial Dial */}
+                            <div style={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
+                                <svg width="60" height="60" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke={strokeColor} strokeWidth="8"
+                                        strokeDasharray={`${matchScore * 2.51} 251`}
+                                        strokeDashoffset="0" transform="rotate(-90 50 50)" strokeLinecap="round" 
+                                        style={{ transition: 'stroke-dasharray 1s ease-out' }} />
+                                </svg>
+                                <div style={{ 
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                    fontSize: '14px', fontWeight: 800, color: strokeColor 
                                 }}>
-                                    {job.companyName?.charAt(0)}
+                                    {matchScore}%
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <div className="job-card__title">{job.title}</div>
-                                    <div className="job-card__company">{job.companyName}</div>
-                                </div>
-                                <button className="job-card__save-btn saved" onClick={() => handleUnsave(job.id)} title="Remove">❤️</button>
                             </div>
-
-                            <div className="job-card__meta">
-                                <span className="job-card__meta-item">📍 {job.location}</span>
-                                <span className="job-card__meta-item">💼 {job.jobType.replace('_', ' ')}</span>
-                                <span className="job-card__meta-item">💰 ${(job.minSalary / 1000).toFixed(0)}k–${(job.maxSalary / 1000).toFixed(0)}k</span>
-                            </div>
-
-                            <div className="job-card__skills">
-                                {job.skills?.slice(0, 3).map((s) => <span key={s} className="badge badge--primary">{s}</span>)}
-                            </div>
-
-                            <div className="job-card__actions">
-                                <button
-                                    className={`btn ${job.applied ? 'btn--secondary' : 'btn--primary'} btn--sm`}
-                                    style={{ flex: 1 }}
-                                    onClick={() => navigate(`/user/jobs/${job.id}`)}
-                                    disabled={job.applied}
-                                >
-                                    {job.applied ? 'Applied' : 'View & Apply →'}
-                                </button>
+                            
+                            <div>
+                                <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '6px' }}>{job.title}</h3>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{job.companyName} • {job.location}</p>
                             </div>
                         </div>
-                    ))}
-                </div>
-            )}
-        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                            <div style={{ 
+                                background: 'rgba(16,185,129,0.1)', color: 'var(--color-secondary)',
+                                padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 800
+                            }}>
+                                {job.jobType || 'FULL_TIME'}
+                            </div>
+                            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                                {job.minExperience} - {job.maxExperience || '*'} Yrs Exp
+                            </div>
+                        </div>
+
+                        {job.missingSkills && job.missingSkills.length > 0 && (
+                            <div style={{ marginBottom: '24px', fontSize: '12px', color: '#f59e0b', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <span>⚠️ Missing Vital Skills:</span>
+                                {job.missingSkills.slice(0, 2).map(ms => <strong key={ms}>{ms}</strong>)}
+                                {job.missingSkills.length > 2 && <span>+{job.missingSkills.length - 2} more</span>}
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
+                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>
+                                ${job.minSalary?.toLocaleString() || 0} - ${job.maxSalary?.toLocaleString() || '∞'}
+                            </div>
+                            <Link to={`/user/jobs/${job.id}`} className="solaris-btn" style={{ width: 'auto', padding: '10px 24px', fontSize: '14px' }}>
+                                Detailed Intel →
+                            </Link>
+                        </div>
+                    </div>
+                )}) : (
+                    <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '80px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
+                        {loading ? 'Decrypting matrix...' : 'Your watchlist is currently empty.'}
+                    </div>
+                )}
+            </div>
+        </SolarisLayout>
     );
 }

@@ -1,93 +1,65 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { ToastContainer } from './hooks/useToast';
-
-// Layout
-import MainLayout from './layouts/MainLayout';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute';
-
-// Auth Pages
 import LoginPage from './pages/auth/LoginPage';
 import UserRegisterPage from './pages/auth/UserRegisterPage';
 import RecruiterRegisterPage from './pages/auth/RecruiterRegisterPage';
-import AdminRegisterPage from './pages/auth/AdminRegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 
-// User Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ManageUsersPage from './pages/admin/ManageUsersPage';
+import ManageRecruitersPage from './pages/admin/ManageRecruitersPage';
+import AdminManageJobsPage from './pages/admin/ManageJobsPage';
+import SystemLogsPage from './pages/admin/SystemLogsPage';
+
 import UserDashboard from './pages/user/UserDashboard';
 import JobListingPage from './pages/user/JobListingPage';
 import JobDetailPage from './pages/user/JobDetailPage';
-import MyApplicationsPage from './pages/user/MyApplicationsPage';
 import SavedJobsPage from './pages/user/SavedJobsPage';
+import ApplicationHistoryPage from './pages/user/ApplicationHistoryPage';
 import UserProfilePage from './pages/user/UserProfilePage';
 
-// Recruiter Pages
 import RecruiterDashboard from './pages/recruiter/RecruiterDashboard';
 import CreateJobPage from './pages/recruiter/CreateJobPage';
 import ManageJobsPage from './pages/recruiter/ManageJobsPage';
 import ApplicationsManagementPage from './pages/recruiter/ApplicationsManagementPage';
 import RecruiterProfilePage from './pages/recruiter/RecruiterProfilePage';
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import ManageUsersPage from './pages/admin/ManageUsersPage';
-import ManageRecruitersPage from './pages/admin/ManageRecruitersPage';
-import AdminManageJobsPage from './pages/admin/AdminManageJobsPage';
-import AdminManageApplicationsPage from './pages/admin/AdminManageApplicationsPage';
+import './styles/animations.css';
 
-// Error Pages
-import NotFoundPage from './pages/NotFoundPage';
-
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastContainer />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register/user" element={<UserRegisterPage />} />
-          <Route path="/register/recruiter" element={<RecruiterRegisterPage />} />
-          <Route path="/register/admin" element={<AdminRegisterPage />} />
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register/user" element={<UserRegisterPage />} />
+      <Route path="/register/recruiter" element={<RecruiterRegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          {/* === USER ROUTES === */}
-          <Route element={<ProtectedRoute allowedRoles={['USER']} />}>
-            <Route element={<MainLayout />}>
-              <Route path="/user/dashboard" element={<UserDashboard />} />
-              <Route path="/user/jobs" element={<JobListingPage />} />
-              <Route path="/user/jobs/:id" element={<JobDetailPage />} />
-              <Route path="/user/applications" element={<MyApplicationsPage />} />
-              <Route path="/user/saved" element={<SavedJobsPage />} />
-              <Route path="/user/profile" element={<UserProfilePage />} />
-            </Route>
-          </Route>
+      {/* Candidate Routes */}
+      <Route path="/user" element={<ProtectedRoute role="USER"><UserDashboard /></ProtectedRoute>} />
+      <Route path="/user/jobs" element={<ProtectedRoute role="USER"><JobListingPage /></ProtectedRoute>} />
+      <Route path="/user/jobs/:id" element={<ProtectedRoute role="USER"><JobDetailPage /></ProtectedRoute>} />
+      <Route path="/user/saved-jobs" element={<ProtectedRoute role="USER"><SavedJobsPage /></ProtectedRoute>} />
+      <Route path="/user/applications" element={<ProtectedRoute role="USER"><ApplicationHistoryPage /></ProtectedRoute>} />
+      <Route path="/user/profile" element={<ProtectedRoute role="USER"><UserProfilePage /></ProtectedRoute>} />
+      
+      {/* Recruiter Routes */}
+      <Route path="/recruiter" element={<ProtectedRoute role="RECRUITER"><RecruiterDashboard /></ProtectedRoute>} />
+      <Route path="/recruiter/jobs" element={<ProtectedRoute role="RECRUITER"><ManageJobsPage /></ProtectedRoute>} />
+      <Route path="/recruiter/jobs/create" element={<ProtectedRoute role="RECRUITER"><CreateJobPage /></ProtectedRoute>} />
+      <Route path="/recruiter/applications" element={<ProtectedRoute role="RECRUITER"><ApplicationsManagementPage /></ProtectedRoute>} />
+      <Route path="/recruiter/profile" element={<ProtectedRoute role="RECRUITER"><RecruiterProfilePage /></ProtectedRoute>} />
 
-          {/* === RECRUITER ROUTES === */}
-          <Route element={<ProtectedRoute allowedRoles={['RECRUITER']} />}>
-            <Route element={<MainLayout />}>
-              <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
-              <Route path="/recruiter/jobs/create" element={<CreateJobPage />} />
-              <Route path="/recruiter/jobs" element={<ManageJobsPage />} />
-              <Route path="/recruiter/applications" element={<ApplicationsManagementPage />} />
-              <Route path="/recruiter/profile" element={<RecruiterProfilePage />} />
-            </Route>
-          </Route>
+      {/* Admin Routes */}
+      <Route path="/admin" element={<ProtectedRoute role="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute role="ADMIN"><ManageUsersPage /></ProtectedRoute>} />
+      <Route path="/admin/recruiters" element={<ProtectedRoute role="ADMIN"><ManageRecruitersPage /></ProtectedRoute>} />
+      <Route path="/admin/jobs" element={<ProtectedRoute role="ADMIN"><AdminManageJobsPage /></ProtectedRoute>} />
+      <Route path="/admin/logs" element={<ProtectedRoute role="ADMIN"><SystemLogsPage /></ProtectedRoute>} />
 
-          {/* === ADMIN ROUTES === */}
-          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
-            <Route element={<MainLayout />}>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<ManageUsersPage />} />
-              <Route path="/admin/recruiters" element={<ManageRecruitersPage />} />
-              <Route path="/admin/jobs" element={<AdminManageJobsPage />} />
-              <Route path="/admin/applications" element={<AdminManageApplicationsPage />} />
-            </Route>
-          </Route>
-
-          {/* 404 */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
+
+export default App;

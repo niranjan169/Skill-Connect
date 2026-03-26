@@ -1,141 +1,89 @@
 /* ===================================================
-   LUZO PORTAL - CSS Design Tokens & Variables
+   SOLARIS DESIGN SYSTEM - Core Tokens
    =================================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
 :root {
-  /* ─── Luminous Onyx - Brand Colors ─── */
-  --color-primary: #8b5cf6;
-  /* Electric Indigo */
-  --color-primary-light: #c4b5fd;
-  --color-primary-dark: #6d28d9;
-  --color-primary-50: rgba(139, 92, 246, 0.05);
-  --color-primary-100: rgba(139, 92, 246, 0.1);
-  --color-primary-200: rgba(139, 92, 246, 0.2);
+    /* ─── Typography ─── */
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
 
-  --color-secondary: #06b6d4;
-  /* Cyan Frost */
-  --color-secondary-dark: #0891b2;
-  --color-accent: #f43f5e;
-  /* Plasma Pink */
-  --color-accent-dark: #e11d48;
+    /* ─── Solaris Color Palette ─── */
+    --color-bg: #030712; /* Deep Space Black */
+    --color-surface: rgba(17, 24, 39, 0.4);
+    
+    --color-primary: #6366f1; /* Electric Indigo */
+    --color-secondary: #10b981; /* Solaris Emerald */
+    --color-accent: #8b5cf6; /* Violet */
+    
+    --grad-solaris: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+    --grad-aurora: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15), transparent 40%),
+                   radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.15), transparent 40%);
 
-  /* ─── Success / Warning / Danger ─── */
-  --color-success: #10b981;
-  --color-success-light: rgba(16, 185, 129, 0.1);
-  --color-warning: #f59e0b;
-  --color-warning-light: rgba(245, 158, 11, 0.1);
-  --color-danger: #f43f5e;
-  /* Rose-tinted danger */
-  --color-danger-light: rgba(244, 63, 94, 0.1);
-  --color-info: #3b82f6;
-  --color-info-light: rgba(59, 130, 246, 0.1);
+    /* ─── Text ─── */
+    --text-pure: #ffffff;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
 
-  /* ─── Neutral / Gray Scale - Luminous Deep ─── */
-  --color-gray-50: #f8fafc;
-  --color-gray-100: #f1f5f9;
-  --color-gray-200: #e2e8f0;
-  --color-gray-300: #cbd5e1;
-  --color-gray-400: #94a3b8;
-  --color-gray-500: #64748b;
-  --color-gray-600: #475569;
-  --color-gray-700: #334155;
-  --color-gray-800: #1e293b;
-  --color-gray-900: #0a0a0a;
-  /* Almost Black */
-  --color-onyx: #020202;
-  /* True Onyx */
+    /* ─── Glassmorphism ─── */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(24px);
+    
+    --shadow-luxe: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 
-  /* ─── Background ─── */
-  --color-bg-body: #020202;
-  --color-bg-card: #0a0a0a;
-  --color-bg-card2: #111111;
-  --color-bg-glass: rgba(10, 10, 10, 0.7);
-  --color-bg-navbar: rgba(2, 2, 2, 0.85);
-  --color-bg-sidebar: #050505;
-  --color-bg-hover: rgba(139, 92, 246, 0.08);
-
-  /* ─── Text ─── */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
-  --color-text-inverse: #000000;
-
-  /* ─── Borders ─── */
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-glow: rgba(139, 92, 246, 0.3);
-  --color-border-focus: var(--color-primary);
-  --color-border-hover: rgba(255, 255, 255, 0.15);
-
-  /* ─── Gradients - Luminous Aurora ─── */
-  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-  /* Indigo to Pink */
-  --gradient-secondary: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-  --gradient-accent: linear-gradient(135deg, #f43f5e 0%, #8b5cf6 100%);
-  --gradient-dark: linear-gradient(135deg, #111111 0%, #020202 100%);
-  --gradient-glow: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%);
-  --gradient-sidebar: linear-gradient(180deg, #050505 0%, #000000 100%);
-  --gradient-card: linear-gradient(145deg, #0d0d0d, #050505);
-
-  /* ─── Shadows ─── */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
-  --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.8);
-  --shadow-primary: 0 4px 20px rgba(139, 92, 246, 0.2);
-  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.1);
-  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 1);
-  --shadow-navbar: 0 4px 30px rgba(0, 0, 0, 0.5);
-
-  /* ─── Spacing ─── */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --space-20: 80px;
-
-  /* ─── Border Radius ─── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
-
-  /* ─── Typography ─── */
-  --font-primary: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-
-  --text-xs: 12px;
-  --text-sm: 14px;
-  --text-base: 15px;
-  --text-lg: 18px;
-  --text-xl: 20px;
-  --text-2xl: 24px;
-  --text-3xl: 32px;
-  --text-4xl: 44px;
-
-  /* ─── Transitions ─── */
-  --transition-fast: 0.15s ease;
-  --transition-base: 0.25s ease;
-  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-spring: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
-  /* ─── Sidebar ─── */
-  --sidebar-width: 250px;
-  --sidebar-collapsed-width: 80px;
-
-  /* ─── Navbar ─── */
-  --navbar-height: 72px;
-
-  /* ─── Z-index ─── */
-  --z-sidebar: 100;
-  --z-navbar: 200;
-  --z-modal: 500;
-  --z-toast: 1000;
-  --z-dropdown: 300;
+    /* ─── Structure ─── */
+    --radius-xl: 32px;
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 8px;
+    
+    --space-base: 8px;
+    
+    /* ─── Transitions ─── */
+    --trans-smooth: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    --trans-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+* {
+    margin: 0; padding: 0; box-sizing: border-box;
+}
+
+body {
+    background-color: var(--color-bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    background-image: var(--grad-aurora);
+    background-attachment: fixed;
+}
+
+h1, h2, h3, h4, .font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+    font-weight: 700;
+}
+
+/* Scrollbar Luxe */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 10px;
+    border: 2px solid var(--color-bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Global Utilities */
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+}
+
+.glow-indigo { box-shadow: 0 0 30px rgba(99, 102, 241, 0.2); }
+.glow-emerald { box-shadow: 0 0 30px rgba(16, 185, 129, 0.2); }

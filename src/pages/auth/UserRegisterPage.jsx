@@ -1,150 +1,139 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../../services/authService';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
+import api from '../../services/api';
+import '../../styles/solar-auth.css';
 
 export default function UserRegisterPage() {
-    const { register, handleSubmit, formState: { errors }, watch } = useForm();
-    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        fullName: '',
+        email: '',
+        password: '',
+        location: '',
+        yearsOfExperience: '',
+        education: '',
+    });
     const [skills, setSkills] = useState([]);
     const [skillInput, setSkillInput] = useState('');
+    const [loading, setLoading] = useState(false);
+    
     const navigate = useNavigate();
     const toast = useToast();
 
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
     const addSkill = (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
+        if (e.key === 'Enter' && skillInput.trim()) {
             e.preventDefault();
-            const val = skillInput.trim();
-            if (val && !skills.includes(val)) setSkills([...skills, val]);
+            if (!skills.includes(skillInput.trim())) {
+                setSkills([...skills, skillInput.trim()]);
+            }
             setSkillInput('');
         }
     };
 
-    const removeSkill = (s) => setSkills(skills.filter((x) => x !== s));
+    const removeSkill = (s) => setSkills(skills.filter(x => x !== s));
 
-    const onSubmit = async (data) => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setLoading(true);
         try {
-            const payload = {
-                ...data,
-                yearsOfExperience: data.yearsOfExperience ? parseInt(data.yearsOfExperience) : 0,
-                skills
+            const payload = { 
+                ...formData, 
+                yearsOfExperience: parseInt(formData.yearsOfExperience) || 0,
+                skills 
             };
-            await authService.registerUser(payload);
-            toast.success('Account created! Please sign in.');
+            await api.post('/auth/register/user', payload);
+            toast.success('Solaris Account Created! Please Sign In.');
             navigate('/login');
         } catch (err) {
-            toast.error(err.message || 'Registration failed.');
+            toast.error(err);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="auth-page">
-            <div className="auth-container" style={{ maxWidth: '560px' }}>
-                <div className="auth-card">
-                    <div className="auth-logo">
-                        <div className="auth-logo__icon">L</div>
-                        <span className="auth-logo__text">LUZO PORTAL</span>
+        <div className="auth-wrapper">
+            <div className="solaris-card" style={{ maxWidth: '600px' }}>
+                <div className="auth-header" style={{ marginBottom: '32px' }}>
+                    <div className="auth-logo">S</div>
+                    <h1 className="auth-title">Candidate Entry</h1>
+                    <p className="auth-subtitle">Begin your professional evolution</p>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div className="solaris-group">
+                            <label className="solaris-label">Full Name</label>
+                            <input name="fullName" className="solaris-input" required onChange={handleChange} />
+                        </div>
+                        <div className="solaris-group">
+                            <label className="solaris-label">Email Address</label>
+                            <input name="email" type="email" className="solaris-input" required onChange={handleChange} />
+                        </div>
                     </div>
 
-                    <h1 className="auth-title">Join as Candidate</h1>
-                    <p className="auth-subtitle">Create your account and find your dream job</p>
-
-                    <form className="form" onSubmit={handleSubmit(onSubmit)}>
-                        <div className="form-group">
-                            <label className="form-label">Full Name</label>
-                            <input
-                                className={`form-input ${errors.fullName ? 'error' : ''}`}
-                                placeholder="John Doe"
-                                {...register('fullName', { required: 'Full Name is required' })}
-                            />
-                            {errors.fullName && <span className="form-error">⚠ {errors.fullName.message}</span>}
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Email Address</label>
-                            <input
-                                type="email"
-                                className={`form-input ${errors.email ? 'error' : ''}`}
-                                placeholder="you@example.com"
-                                {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })}
-                            />
-                            {errors.email && <span className="form-error">⚠ {errors.email.message}</span>}
-                        </div>
-
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label className="form-label">Password</label>
-                                <input
-                                    type="password"
-                                    className={`form-input ${errors.password ? 'error' : ''}`}
-                                    placeholder="min 8 chars"
-                                    {...register('password', { required: 'Password is required', minLength: { value: 8, message: 'Min 8 characters' } })}
-                                />
-                                {errors.password && <span className="form-error">⚠ {errors.password.message}</span>}
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Location</label>
-                                <input
-                                    className="form-input"
-                                    placeholder="New York, NY"
-                                    {...register('location')}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label className="form-label">Years of Experience</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    placeholder="e.g. 3"
-                                    {...register('yearsOfExperience')}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Education</label>
-                                <input
-                                    className="form-input"
-                                    placeholder="e.g. Bachelor's in CS"
-                                    {...register('education')}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Skills */}
-                        <div className="form-group">
-                            <label className="form-label">Skills (press Enter to add)</label>
-                            <div className="skills-tags">
-                                {skills.map((s) => (
-                                    <span key={s} className="skill-tag">
-                                        {s}
-                                        <button type="button" className="skill-tag__remove" onClick={() => removeSkill(s)}>✕</button>
-                                    </span>
-                                ))}
-                                <input
-                                    className="form-input"
-                                    style={{ border: 'none', background: 'transparent', flex: 1, minWidth: '120px', padding: '4px 0' }}
-                                    placeholder="e.g. React, Java..."
-                                    value={skillInput}
-                                    onChange={(e) => setSkillInput(e.target.value)}
-                                    onKeyDown={addSkill}
-                                />
-                            </div>
-                        </div>
-
-                        <button type="submit" className="btn btn--primary btn--full btn--lg" disabled={loading}>
-                            {loading ? <><span className="spinner" /> Creating account...</> : '🚀 Create Account'}
-                        </button>
-                    </form>
-
-                    <div style={{ textAlign: 'center', marginTop: '20px', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                        Already have an account? <Link to="/login" style={{ color: 'var(--color-primary-light)', textDecoration: 'none', fontWeight: '600' }}>Sign In</Link>
+                    <div className="solaris-group">
+                        <label className="solaris-label">Password</label>
+                        <input name="password" type="password" className="solaris-input" required onChange={handleChange} />
                     </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div className="solaris-group">
+                            <label className="solaris-label">Experience (Years)</label>
+                            <input name="yearsOfExperience" type="number" className="solaris-input" required onChange={handleChange} />
+                        </div>
+                        <div className="solaris-group">
+                            <label className="solaris-label">Location</label>
+                            <input name="location" className="solaris-input" required onChange={handleChange} />
+                        </div>
+                    </div>
+
+                    <div className="solaris-group">
+                        <label className="solaris-label">Education</label>
+                        <input name="education" className="solaris-input" placeholder="e.g. B.Tech in Computer Science" required onChange={handleChange} />
+                    </div>
+
+                    <div className="solaris-group">
+                        <label className="solaris-label">Skills (Press Enter to Add)</label>
+                        <div style={{ 
+                            display: 'flex', flexWrap: 'wrap', gap: '8px', 
+                            padding: '12px', background: 'rgba(255,255,255,0.02)', 
+                            border: '1px solid var(--glass-border)', borderRadius: '12px',
+                            minHeight: '60px'
+                        }}>
+                            {skills.map(s => (
+                                <span key={s} style={{ 
+                                    background: 'rgba(99,102,241,0.15)', color: 'var(--color-primary)', 
+                                    padding: '4px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+                                    display: 'flex', alignItems: 'center', gap: '6px',
+                                    border: '1px solid rgba(99,102,241,0.2)'
+                                }}>
+                                    {s}
+                                    <span onClick={() => removeSkill(s)} style={{ cursor: 'pointer', opacity: 0.6 }}>✕</span>
+                                </span>
+                            ))}
+                            <input 
+                                className="solaris-input" 
+                                style={{ border: 'none', background: 'transparent', flex: 1, padding: '4px 8px', height: 'auto', minWidth: '100px' }}
+                                value={skillInput}
+                                onChange={(e) => setSkillInput(e.target.value)}
+                                onKeyDown={addSkill}
+                                placeholder="..."
+                            />
+                        </div>
+                    </div>
+
+                    <button type="submit" className="solaris-btn" style={{ marginTop: '20px' }} disabled={loading}>
+                        {loading ? 'Committing...' : '✨ Initialize Profile'}
+                    </button>
+                </form>
+
+                <div className="auth-footer">
+                    Already part of Solaris? <Link to="/login" className="auth-link">Sign In</Link>
                 </div>
             </div>
         </div>

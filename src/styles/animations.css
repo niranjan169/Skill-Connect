@@ -1,313 +1,51 @@
 /* ===================================================
-   LUZO PORTAL - Animations & Transitions
+   SOLARIS ANIMATIONS - Impressive Interactions
    =================================================== */
 
-/* ─── Keyframes ─── */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@keyframes aurora-shift {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
 }
 
-@keyframes fadeInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-16px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes fadeInRight {
-    from {
-        opacity: 0;
-        transform: translateX(16px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+@keyframes glass-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.92);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+.anim-fade-in-up {
+    animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-12px);
-    }
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.shimmer-trigger {
+    position: relative; overflow: hidden;
 }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.shimmer-trigger::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transform: translateX(-100%);
+    transition: none;
 }
 
-@keyframes shimmer {
-    0% {
-        background-position: -200% 0;
-    }
-
-    100% {
-        background-position: 200% 0;
-    }
+.shimmer-trigger:hover::after {
+    animation: glass-shimmer 0.8s ease-in-out;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+.page-transition-enter {
+    opacity: 0; transform: scale(0.98);
 }
-
-@keyframes bounce {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-6px);
-    }
-}
-
-@keyframes glow {
-
-    0%,
-    100% {
-        box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
-    }
-
-    50% {
-        box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
-    }
-}
-
-@keyframes toastSlide {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes toastFadeOut {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
-
-@keyframes countUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes borderPulse {
-
-    0%,
-    100% {
-        border-color: rgba(99, 102, 241, 0.3);
-    }
-
-    50% {
-        border-color: rgba(99, 102, 241, 0.8);
-    }
-}
-
-/* ─── Animation Utility Classes ─── */
-.anim-fade-in {
-    animation: fadeIn var(--transition-base) forwards;
-}
-
-.anim-fade-in-left {
-    animation: fadeInLeft var(--transition-base) forwards;
-}
-
-.anim-scale-in {
-    animation: scaleIn var(--transition-spring) forwards;
-}
-
-.anim-slide-down {
-    animation: slideDown var(--transition-base) forwards;
-}
-
-.anim-slide-up {
-    animation: slideUp var(--transition-base) forwards;
-}
-
-.anim-spin {
-    animation: spin 1s linear infinite;
-}
-
-/* Stagger delays */
-.delay-1 {
-    animation-delay: 0.05s;
-}
-
-.delay-2 {
-    animation-delay: 0.1s;
-}
-
-.delay-3 {
-    animation-delay: 0.15s;
-}
-
-.delay-4 {
-    animation-delay: 0.2s;
-}
-
-.delay-5 {
-    animation-delay: 0.25s;
-}
-
-.delay-6 {
-    animation-delay: 0.3s;
-}
-
-/* ─── Skeleton Loader ─── */
-.skeleton {
-    background: linear-gradient(90deg,
-            var(--color-bg-card2) 25%,
-            rgba(255, 255, 255, 0.05) 50%,
-            var(--color-bg-card2) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.6s infinite;
-    border-radius: var(--radius-md);
-}
-
-.skeleton-text {
-    height: 14px;
-    border-radius: var(--radius-sm);
-    margin-bottom: var(--space-2);
-}
-
-.skeleton-text--sm {
-    width: 60%;
-}
-
-.skeleton-text--md {
-    width: 80%;
-}
-
-.skeleton-text--full {
-    width: 100%;
-}
-
-.skeleton-card {
-    height: 120px;
-    width: 100%;
-}
-
-.skeleton-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-full);
-}
-
-.skeleton-badge {
-    width: 70px;
-    height: 24px;
-    border-radius: var(--radius-full);
-}
-
-/* ─── Page Transition Wrapper ─── */
-.page-enter {
-    animation: fadeIn 0.3s ease forwards;
-}
-
-/* ─── Hover Effects ─── */
-.hover-lift {
-    transition: transform var(--transition-base), box-shadow var(--transition-base);
-}
-
-.hover-lift:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-}
-
-.hover-glow:hover {
-    box-shadow: var(--shadow-primary);
-}
-
-/* ─── Status Badge Animations ─── */
-.badge-animate {
-    transition: all var(--transition-spring);
-}
-
-.badge-animate:hover {
-    transform: scale(1.06);
-}
-
-/* ─── Spinner ─── */
-.spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    border-top-color: var(--color-primary);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-}
-
-.spinner--lg {
-    width: 40px;
-    height: 40px;
-    border-width: 3px;
-}
-
-/* ─── Pulse dot indicator ─── */
-.pulse-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--color-success);
-    animation: pulse 2s ease infinite;
+.page-transition-enter-active {
+    opacity: 1; transform: scale(1);
+    transition: var(--trans-smooth);
 }

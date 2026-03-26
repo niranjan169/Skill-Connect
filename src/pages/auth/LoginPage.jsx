@@ -1,113 +1,85 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { authService } from '../../services/authService';
 import { useToast } from '../../hooks/useToast';
+import '../../styles/solar-auth.css';
 
 export default function LoginPage() {
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    
     const { login } = useAuth();
     const navigate = useNavigate();
     const toast = useToast();
 
-    const ROLE_REDIRECTS = {
-        USER: '/user/dashboard',
-        RECRUITER: '/recruiter/dashboard',
-        ADMIN: '/admin/dashboard',
-    };
-
-    const onSubmit = async (data) => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setLoading(true);
         try {
-            const res = await authService.loginUser(data);
-            const { token, refreshToken, role, user, name, email, username } = res.data;
-
-            // Backend returns: { token, refreshToken, role, userId, email, fullName }
-            const userData = {
-                role: role || (user?.role),
-                name: name || (user?.name) || username || (user?.username) || 'User',
-                email: email || (user?.email),
-                username: username || (user?.username),
-            };
-
-            if (!token || !userData.role) {
-                throw new Error('Invalid server response');
-            }
-
-            login(token, refreshToken, userData);
+            const userData = await login(email, password);
             toast.success(`Welcome back, ${userData.name}!`);
-            navigate(ROLE_REDIRECTS[userData.role] || '/login');
+            
+            // Route based on role
+            if (userData.role === 'ADMIN') navigate('/admin');
+            else if (userData.role === 'RECRUITER') navigate('/recruiter');
+            else navigate('/user');
+            
         } catch (err) {
-            toast.error(err.message || 'Login failed. Please try again.');
+            toast.error(err);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="auth-page">
-            <div className="auth-container">
-                <div className="auth-card">
-                    {/* Logo */}
-                    <div className="auth-logo">
-                        <div className="auth-logo__icon">L</div>
-                        <span className="auth-logo__text">LUZO PORTAL</span>
+        <div className="auth-wrapper">
+            <div className="solaris-card">
+                <div className="auth-header">
+                    <div className="auth-logo">L</div>
+                    <h1 className="auth-title">Solaris Login</h1>
+                    <p className="auth-subtitle">Welcome back to the elite job portal</p>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="solaris-group">
+                        <label className="solaris-label">Email Address</label>
+                        <input 
+                            type="email" 
+                            className="solaris-input" 
+                            placeholder="name@company.com"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
                     </div>
 
-                    <h1 className="auth-title">Welcome Back</h1>
-                    <p className="auth-subtitle">Sign in to your account to continue</p>
-
-                    <form className="form" onSubmit={handleSubmit(onSubmit)}>
-                        <div className="form-group">
-                            <label className="form-label">Email Address</label>
-                            <input
-                                type="email"
-                                className={`form-input ${errors.email ? 'error' : ''}`}
-                                placeholder="you@example.com"
-                                {...register('email', {
-                                    required: 'Email is required',
-                                    pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' },
-                                })}
-                            />
-                            {errors.email && <span className="form-error">⚠ {errors.email.message}</span>}
+                    <div className="solaris-group">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <label className="solaris-label" style={{ marginBottom: 0 }}>Password</label>
+                            <Link to="/forgot-password" size="sm" className="auth-link" style={{ fontSize: '13px' }}>Forgot?</Link>
                         </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Password</label>
-                            <input
-                                type="password"
-                                className={`form-input ${errors.password ? 'error' : ''}`}
-                                placeholder="••••••••"
-                                {...register('password', {
-                                    required: 'Password is required',
-                                    minLength: { value: 6, message: 'At least 6 characters' },
-                                })}
-                            />
-                            {errors.password && <span className="form-error">⚠ {errors.password.message}</span>}
-                        </div>
-
-                        <button type="submit" className="btn btn--primary btn--full btn--lg" disabled={loading}>
-                            {loading ? <><span className="spinner" /> Signing in...</> : '→ Sign In'}
-                        </button>
-                    </form>
-
-                    {/* Divider */}
-                    <div style={{ textAlign: 'center', margin: '24px 0 16px', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-                        Don&apos;t have an account?
+                        <input 
+                            type="password" 
+                            className="solaris-input" 
+                            placeholder="••••••••"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                        <Link to="/register/user" className="btn btn--secondary" style={{ flex: 1, minWidth: '140px', justifyContent: 'center' }}>
-                            Register as Candidate
-                        </Link>
-                        <Link to="/register/recruiter" className="btn btn--secondary" style={{ flex: 1, minWidth: '140px', justifyContent: 'center' }}>
-                            Register as Recruiter
-                        </Link>
-                        <Link to="/register/admin" className="btn btn--secondary" style={{ flex: 1, minWidth: '140px', justifyContent: 'center' }}>
-                            Register as Admin
-                        </Link>
+                    <button type="submit" className="solaris-btn" disabled={loading}>
+                        {loading ? 'Authenticating...' : '🚀 Sign In'}
+                    </button>
+                </form>
+
+                <div className="auth-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div>Don't have an account?</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                        <Link to="/register/user" className="auth-link">Candidate</Link>
+                        <span>|</span>
+                        <Link to="/register/recruiter" className="auth-link">Recruiter</Link>
                     </div>
                 </div>
             </div>

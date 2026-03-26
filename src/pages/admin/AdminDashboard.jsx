@@ -1,88 +1,78 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import {
-    LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-} from 'recharts';
-import { adminService } from '../../services/adminService';
-
-// Mock data removed
-const ttStyle = { background: 'var(--color-bg-card2)', border: '1px solid var(--color-border)', borderRadius: '10px', color: 'var(--color-text-primary)' };
+import SolarisLayout from '../../components/layout/SolarisLayout';
+import api from '../../services/api';
+import '../../styles/solaris-layout.css';
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState(null);
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        totalRecruiters: 0,
+        totalJobs: 0,
+        totalApplications: 0
+    });
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        (async () => {
-            try {
-                const res = await adminService.getDashboardStats();
-                if (res?.data) setStats(res.data);
-            } catch { }
-        })();
+        api.get('/admin/dashboard').then(res => {
+            setStats(res.data);
+            setLoading(false);
+        }).catch(() => {
+            setLoading(false);
+        });
     }, []);
 
-    const statCards = stats ? [
-        { label: 'Total Users', value: stats.totalUsers, icon: '👥', v: 'primary' },
-        { label: 'Recruiters', value: stats.totalRecruiters, icon: '🏢', v: 'secondary' },
-        { label: 'Active Jobs', value: stats.totalJobs, icon: '💼', v: 'success' },
-        { label: 'Total Applications', value: stats.totalApplications, icon: '📋', v: 'warning' },
-    ] : [];
-
     return (
-        <div className="page-enter">
-            <div className="page-header">
-                <h1 className="page-header__title">Admin Dashboard 🛡️</h1>
-                <p className="page-header__subtitle">Platform-wide analytics and management</p>
-            </div>
+        <SolarisLayout>
+            <div className="bento-grid">
+                <div className="bento-item" style={{ gridColumn: 'span 12', background: 'linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(139,92,246,0.05) 100%)' }}>
+                    <h1 style={{ fontSize: '32px', marginBottom: '8px' }}>Command Center</h1>
+                    <p style={{ color: 'var(--text-secondary)' }}>Global system oversight and live real-time metrics platform.</p>
+                </div>
 
-            <div className="stats-grid">
-                {statCards.map((s, i) => (
-                    <div key={s.label} className={`stats-card anim-fade-in delay-${i + 1}`}>
-                        <div className={`stats-card__icon stats-card__icon--${s.v}`}>{s.icon}</div>
-                        <div className="stats-card__label">{s.label}</div>
-                        <div className="stats-card__value">{s.value.toLocaleString()}</div>
-                    </div>
-                ))}
-            </div>
+                <div className="bento-item" style={{ gridColumn: 'span 3' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>USERS</div>
+                    <div style={{ fontSize: '32px', fontWeight: 800 }}>{loading ? '...' : stats.totalUsers}</div>
+                </div>
+                <div className="bento-item" style={{ gridColumn: 'span 3' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>RECRUITERS</div>
+                    <div style={{ fontSize: '32px', fontWeight: 800 }}>{loading ? '...' : stats.totalRecruiters}</div>
+                </div>
+                <div className="bento-item" style={{ gridColumn: 'span 3' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>LIVE JOBS</div>
+                    <div style={{ fontSize: '32px', fontWeight: 800 }}>{loading ? '...' : stats.totalJobs}</div>
+                </div>
+                <div className="bento-item" style={{ gridColumn: 'span 3' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>APPLICATIONS</div>
+                    <div style={{ fontSize: '32px', fontWeight: 800 }}>{loading ? '...' : stats.totalApplications}</div>
+                </div>
 
-            {/* Line chart */}
-            <div className="chart-card anim-fade-in delay-2" style={{ marginBottom: '24px' }}>
-                <div className="chart-card__header">
-                    <div>
-                        <div className="chart-card__title">Platform Growth</div>
-                        <div className="chart-card__subtitle">Users and applications over the past 7 months</div>
+                <div className="bento-item" style={{ gridColumn: 'span 8' }}>
+                    <h2 style={{ fontSize: '20px', marginBottom: '20px' }}>Dashboard Synced</h2>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div style={{ display: 'flex', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)' }}>
+                            <span style={{ color: 'var(--color-primary)' }}>[INFO]</span> Real-time aggregation active.
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)' }}>
+                            <span style={{ color: 'var(--color-secondary)' }}>[SUCCESS]</span> No duplicates detected in entity tracking arrays.
+                        </div>
                     </div>
                 </div>
-                <ResponsiveContainer width="100%" height={260}>
-                    <LineChart
-                        data={stats?.platformGrowth ? Object.entries(stats.platformGrowth).map(([month, users]) => ({ month, users })) : []}
-                        margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={ttStyle} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
-                        <Line type="monotone" dataKey="users" stroke="#6366f1" strokeWidth={2.5} dot={{ fill: '#6366f1', r: 4 }} name="New Users" />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
 
-            {/* Quick links */}
-            <div className="grid grid-4 anim-fade-in delay-3">
-                {[
-                    { icon: '👥', label: 'Manage Users', to: '/admin/users' },
-                    { icon: '🏢', label: 'Manage Recruiters', to: '/admin/recruiters' },
-                    { icon: '💼', label: 'Manage Jobs', to: '/admin/jobs' },
-                    { icon: '📋', label: 'All Applications', to: '/admin/applications' },
-                ].map((item) => (
-                    <Link key={item.label} to={item.to} className="card" style={{ textDecoration: 'none', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s ease' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-hover)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'none'; }}
-                    >
-                        <div style={{ fontSize: '36px', marginBottom: '10px' }}>{item.icon}</div>
-                        <div style={{ fontWeight: 600, color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>{item.label}</div>
-                    </Link>
-                ))}
+                <div className="bento-item" style={{ gridColumn: 'span 4' }}>
+                    <h2 style={{ fontSize: '20px', marginBottom: '20px' }}>System Health</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+                                <span>API Status</span>
+                                <span style={{ color: 'var(--color-secondary)' }}>OPERATIONAL</span>
+                            </div>
+                            <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }}>
+                                <div style={{ width: '100%', height: '100%', background: 'var(--color-secondary)' }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </SolarisLayout>
     );
 }
