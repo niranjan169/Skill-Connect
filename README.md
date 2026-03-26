@@ -10,6 +10,31 @@
 ## 💎 Project Philosophy
 Designed with the **Solaris Design System**, this platform moves away from generic UI into a futuristic, immersive workspace. Every interaction is designed to feel alive, using smooth radial gradients, backdrop blurs, and micro-animations to enhance the recruiter and candidate experience.
 
+## 🕹️ Solaris Operational Workflows
+
+### 👤 Candidate Journey
+1.  **Identity Creation**: Register / Login to the Solaris Network.
+2.  **Discovery**: Browse the global job matrix.
+3.  **Refinement**: Filter by Capabilities (Skills), Location, Experience, and Engagement Type.
+4.  **Preservation**: Save high-interest positions (❤️) for later acquisition.
+5.  **Intelligence Check**: View real-time **Match Percentage (%)** and **Skill Gap Suggestions**.
+6.  **Transmission**: Apply with Hosted Resume URL and supplementary credentials.
+7.  **Tracking**: Monitor progress through the standard pipeline: `Applied ⏳` → `Shortlisted ✅` → `Rejected ❌` → `Selected 🎉`.
+
+### 🏢 Recruiter Journey
+1.  **Principal Setup**: Register / Login and define Company Profile.
+2.  **Broadcasting**: Post Positions with precise Capability requirements.
+3.  **Acquisition**: View incoming applicants ranked by **Solaris Match Engine**.
+4.  **Curation**: Filter candidates and review Intelligence Gaps.
+5.  **Intelligence Notes**: Add recruiter-specific comments to candidate profiles.
+6.  **Pipeline Management**: Advance candidates through Shortlist, Reject, or Select phases.
+
+### 🛡️ Admin Oversight
+1.  **Command Center**: Access the main Dashboard for ecosystem health (Total Users, Jobs, Apps).
+2.  **Talent Policing**: Manage Applicants (View, Block/Activate).
+3.  **Broadcast Quality**: Manage Job Listings (Approve/Delete).
+4.  **Log Intelligence**: Monitor the system-wide Audit Log for all security-relevant actions.
+
 ## 🚀 Key Intelligence Features
 
 ### 🧠 Applicant Intelligence Matrix
